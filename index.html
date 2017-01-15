@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>My first Three.js app</title>
+		<link href="css/qunit-2.0.1.css" rel="css/stylesheet">
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+		<script src="js/qunit-2.0.1.js"></script>
+		<script type="text/javascript" src="js/three.js"></script>
+		<script src="js/terrainShader.js"></script>
+	</head>
+	<body>
+		<div id="webgl1"></div>
+		<div id="webgl2"></div>
+
+
+		<script type="text/javascript">
+			//scene
+			var scene = new THREE.Scene();
+
+			//camera
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+			//renderer
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setPixelRatio(window.devicePixelRatio);
+			document.body.appendChild( renderer.domElement );
+
+			//Create lights and add them to the scene
+			light = new THREE.AmbientLight(0xffffff, 0.5);
+		    //light.add(new THREE.Mesh(new THREE.SphereGeometry( 2.0, 16, 8 ), new THREE.MeshBasicMaterial( { color: 0xffffff } ) ))
+		    
+		    light2 = new THREE.PointLight(0xffffff, 0.5, 100000);
+		    //light2.add(new THREE.Mesh(new THREE.SphereGeometry( 0.5, 16, 8 ), new THREE.MeshBasicMaterial( { color: 0xf536fc } ) ))
+		    //light.position.set(-30,-30,100);
+	        //light2.decay=1;
+	        //light2.position.set(0,0,50);
+
+		    scene.add(light2);
+		    scene.add(light);
+
+			var shader = THREE.testShader;
+		    //load texture
+            var loader = new THREE.TextureLoader();
+            var attributes = {
+                displacement: {
+                    type: 'f', // a float
+                        value: [] // an empty array
+                }
+            };
+            var uniforms = {
+                amplitude: {
+                    type: 'f', // a float
+                    value: 0
+                }
+			};
+
+            loader.load( "biom5.png", function(texture){
+                var shaderGeometry = new THREE.SphereGeometry(10, 32, 32);
+                var verts = shaderGeometry.vertices;
+                var values = attributes.displacement.value;
+                for (var v = 0; v < verts.length; v++) {
+                    values.push(Math.random() * 30);
+                }
+				var shaderMaterial = new THREE.ShaderMaterial({
+				    uniforms: { tDiffuse: {type: "t", value: texture}, amplitude: uniforms.amplitude},
+				    attributes: attributes,
+					vertexShader: shader.vertexShader,
+					fragmentShader: shader.fragmentShader});
+
+
+				var shaderMesh = new THREE.Mesh(shaderGeometry, shaderMaterial);
+
+				shaderMesh.position.set(10,10,10);
+				scene.add(shaderMesh);
+			});
+
+		    //geometry
+            var boxGeometry = new THREE.CubeGeometry( 10, 10, 10 );
+            var hexColor = 0xffffff	;
+            var material = new THREE.MeshLambertMaterial({color: hexColor});
+            material.reflectivity = 0.5;
+            material.reflectivityRation = 0.98;
+            var cube = new THREE.Mesh( boxGeometry, material );
+            cube.position.set(0,0, -50);
+            scene.add(cube);
+
+			camera.position.z = 50;
+			var planeGeometry = new THREE.PlaneGeometry( 32, 32, 16,16 );
+			var terrain = new THREE.Mesh( planeGeometry, new THREE.MeshBasicMaterial( {color: 0xd5c544, side: THREE.DoubleSide}));
+			scene.add( terrain );
+
+			var mergeGeom = new THREE.Geometry();
+			mergeGeom.merge(cube.geometry, terrain.matrix);
+			var mergeMesh = new THREE.Mesh(mergeGeom, new THREE.MeshLambertMaterial( {color: 0x005600, side: THREE.DoubleSide}));
+			//scene.add(mergeMesh);
+
+            var pianoA = new THREE.PlaneGeometry(3 * 60, 3 * 60, 60, 60);
+            //var meshA = new THREE.Mesh(pianoA, acqua);
+            //scene.add(meshA);
+
+            var geometry = new THREE.PlaneGeometry(60, 60, 9, 9);
+            for(var i = 0; i < geometry.vertices.length; i++){
+                geometry.vertices[i].z = (Math.random() -0.5) * 100;
+            }
+            var material = new THREE.MeshBasicMaterial({
+                color: 0x333333,
+                wireframe: true
+            });
+            var plane = new THREE.Mesh(geometry, material);
+            scene.add(plane);
+            document.getElementById('webgl1').appendChild(renderer.domElement);
+			render();
+			
+
+			///functions
+			function ChangeMaterial(){
+				hexColor += 1;
+				console.log (hexColor);
+				console.log (HTML2RGB(hexColor));
+				cube.material = new THREE.MeshLambertMaterial( {color: hexColor});
+			}
+
+			/*function incrementHexColor(color, step){
+	    	var colorToInt = parseInt(color);                     				// Convert HEX color to integer
+	        var nstep = parseInt(step);                                         // Convert step to integer
+	    	if(!isNaN(colorToInt) && !isNaN(nstep)){                            // Make sure that color has been converted to integer
+		        colorToInt += nstep;                                            // Increment integer with step
+		        var ncolor = colorToInt.toString(16);                           // Convert back integer to HEX
+		        ncolor = '#' + (new Array(7-ncolor.length).join(0)) + ncolor;   // Left pad "0" to make HEX look like a color
+		        if(/^#[0-9a-f]{6}$/i.test(ncolor)){                             // Make sure that HEX is a valid color
+		            return ncolor;
+		        }
+	    	}
+		    return color;
+			}*/
+			function render() {
+			requestAnimationFrame( render );
+			renderer.render( scene, camera );
+			cube.rotation.x += 0.05;
+			cube.rotation.y += 0.05;
+			terrain.rotation.x += 0.005;
+			terrain.rotation.y += 0.005;
+			mergeMesh.rotation.x += 0.02;
+			mergeMesh.rotation.y += 0.02;
+
+			//ChangeMaterial();
+			}
+
+			function RGB2HTML(red, green, blue)
+			{
+			    var decColor = 0x100000 * red + 0x1000 * green + 0x10 * blue;
+			    return '#'+ decColor.toString(16).substr(1);
+			}
+			function HTML2RGB(color){
+				var blue =  color << 32;
+				var green = color << 16
+				var red = color << 8;
+				return [blue, red, green];
+			}
+
+		</script>
+	</body>
+</html>
+
