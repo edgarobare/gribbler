@@ -48,8 +48,8 @@ THREE.testShader = {
 			"float dProd = max(0.0, dot(vNormal, light));",
 
 			//calculate the altitude due to the color
-			"float r = 0.3+hash(pos[0]+pos[1])/2.0;",
-			"float rip = 0.4*normalize(dot(vec3(0,0,1),vNormal));",
+			"float r = 0.5+hash(pos[0]+pos[1])/2.0;",
+			"float rip = 0.45*normalize(dot(vec3(0,0,1),vNormal));",
         	"vec2 altLat=vec2(rip+0.01*r,0.1+((pos[2])/60.0));",
 			//calculate the fragment color
 			"vec3 rgb = texture2D(tDiffuse, altLat).xyz;",
